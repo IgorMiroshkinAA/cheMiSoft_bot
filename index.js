@@ -79,5 +79,3 @@ data.forEach(item => {
 });
 
 bot.launch();
-
-console.log('Бот запущен')
