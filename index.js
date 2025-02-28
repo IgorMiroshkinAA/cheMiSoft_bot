@@ -1,6 +1,11 @@
 require('dotenv').config();
+const path = require('path');
 const { Telegraf, Markup } = require('telegraf');
 const bot = new Telegraf(process.env.BOT_API);
+
+const data = require('./data');
+
+const imagePath = path.join(__dirname, './assets/pic.png')
 
 /**
  * Вызов бота и добавление двух кнопок 
@@ -14,37 +19,65 @@ bot.start((ctx) => { // Бот стартует
 
 /**
  * 
- * Действие бота при нажатии на кпопку
- * Задание для Саши
- * 1. Переписать текст сообщения
- * 2. Переписать нименование кнопки
+ * Действие бота при нажатии на кнопку на русском языке
  */
 bot.action('lang_ru', (ctx) => {
     ctx.reply('Из списка выберите необходимую толщину основного металла', Markup.inlineKeyboard([
-        [Markup.button.callback('Выберать толщину', 'show_thikness')]
-    ]))
-})
+        [Markup.button.callback('Выбрать толщину', 'show_thikness_ru')]
+    ]));
+});
 
 /**
- * Подготовить English version
- * Задание для Саши
- * 1. Переписать текст сообщения
- * 2. Переписать нименование кнопки
+ * Действие бота при нажатии на кнопку на английском языке
  */
-
 bot.action('lang_en', (ctx) => {
-    ctx.reply("You've been selected English ")
-})
+    ctx.reply('Choose the required base metal thickness from the list', Markup.inlineKeyboard([
+        [Markup.button.callback('Choose thickness', 'show_thikness_en')]
+    ]));
+});
 
 /**
- * 
- * Смапить данные и сделать поиск по толщине
- * Сделать кнопки на каждую толщину
- * К каждой толщине привязать эскиз с указанием ширины и длины
+ * Смапить данные и сделать поиск по толщине для русского языка
  */
+bot.action('show_thikness_ru', (ctx) => {
+    const buttons = data.map(item => Markup.button.callback(item.thickness, `thickness_ru_${item.thickness}`));
+    const keyboard = Markup.inlineKeyboard(buttons, { columns: 6 });
+    ctx.reply('Выберите значение толщины:', keyboard);
+});
 
-bot.action('show_thikness', (ctx) => {
-    ctx.reply('Толщина 1 см')
-})
+data.forEach(item => {
+    bot.action(`thickness_ru_${item.thickness}`, (ctx) => {
+        const response = `
+            *Ширина растяжения*: ${item.widthStretching}
+*Длина растяжения*: ${item.lengthStretching}
+*Ширина изгиба*: ${item.widthBend}
+*Длина изгиба*: ${item.lengthBend}
+        `;
+        ctx.replyWithPhoto({ source: imagePath }, { caption: response, parse_mode: 'Markdown' });
+    });
+});
+
+/**
+ * Смапить данные и сделать поиск по толщине для английского языка
+ */
+bot.action('show_thikness_en', (ctx) => {
+    const buttons = data.map(item => Markup.button.callback(item.thickness, `thickness_en_${item.thickness}`));
+    const keyboard = Markup.inlineKeyboard(buttons, { columns: 6 });
+    ctx.reply('Choose the thickness value:', keyboard);
+});
+
+data.forEach(item => {
+    bot.action(`thickness_en_${item.thickness}`, (ctx) => {
+        const response = `
+            *Width Stretching*: ${item.widthStretching}
+*Length Stretching*: ${item.lengthStretching}
+*Width Bend*: ${item.widthBend}
+*Length Bend*: ${item.lengthBend}
+        `;
+        ctx.replyWithPhoto({ source: imagePath }, { caption: response, parse_mode: 'Markdown' });
+    });
+});
 
 bot.launch();
+
+console.log('Бот запущен')
